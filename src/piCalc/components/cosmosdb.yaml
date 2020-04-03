@@ -1,0 +1,17 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: piStore
+spec:
+  type: bindings.azure.cosmosdb
+  metadata:
+  - name: url
+    value: URL
+  - name: masterkey
+    value: MASTERKEY
+  - name: database
+    value: DATABASE
+  - name: collection
+    value: COLLECTION
+  - name: partitionKey
+    value: PARTITIONKEY
