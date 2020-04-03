@@ -42,7 +42,7 @@
 			"properties":
 			{
 				"resource":{
-					"id":  "variables(containerName)",
+					"id":  "variables('containerName')",
 					"partitionKey": {
 						"paths": [
 						"/myPartitionKey"
