@@ -14,7 +14,7 @@ This repo is to demonstrate all the pieces of the Secure & Automated Demo enviro
 
 ### Deploy Azure Resources
 
-- [Deploy Infrastructure ARM Template](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure-octo%2Fdemo-SecureDemos-Example%2Fmaster%2F.infrastructure%2Fazure%2Farm-template.json")
+- [Deploy Infrastructure ARM Template](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure-octo%2Fdemo-SecureDemos-Example%2Fmaster%2F.infrastructure%2Fazure%2Fazuredeploy.json")
 
 ### Deploy Data Factory
 
