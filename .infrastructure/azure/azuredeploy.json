@@ -38,7 +38,7 @@
 			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
 			"name": "[concat(variables('accountName'), '/', variables('databaseName'), '/', variables('containerName'))]",
 			"apiVersion": "2019-08-01",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
+			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), variables('databaseName'))]" ],
 			"properties":
 			{
 				"resource":{
