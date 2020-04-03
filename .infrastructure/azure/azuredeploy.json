@@ -2,112 +2,11 @@
 	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
-		"primaryRegion":{
-			"type":"string",
-			"metadata": {
-				"description": "The primary replica region for the Cosmos DB account."
-			}
-		},
-		"secondaryRegion":{
-			"type":"string",
-			"metadata": {
-			  "description": "The secondary replica region for the Cosmos DB account."
-		  }
-		},
-		"maxStalenessPrefix": {
-			"type": "int",
-			"minValue": 10,
-			"defaultValue": 100000,
-			"maxValue": 2147483647,
-			"metadata": {
-				"description": "Max stale requests. Required for BoundedStaleness. Valid ranges, Single Region: 10 to 1000000. Multi Region: 100000 to 1000000."
-			}
-		},
-		"maxIntervalInSeconds": {
-			"type": "int",
-			"minValue": 5,
-			"defaultValue": 300,
-			"maxValue": 86400,
-			"metadata": {
-				"description": "Max lag time (minutes). Required for BoundedStaleness. Valid ranges, Single Region: 5 to 84600. Multi Region: 300 to 86400."
-			}
-		},	
-		"multipleWriteLocations": {
-			"type": "bool",
-			"defaultValue": false,
-			"allowedValues": [ true, false ],
-			"metadata": {
-				"description": "Enable multi-master to make all regions writable."
-			}
-		},
-		"automaticFailover": {
-			"type": "bool",
-			"defaultValue": false,
-			"allowedValues": [ true, false ],
-			"metadata": {
-				"description": "Enable automatic failover for regions. Ignored when Multi-Master is enabled"
-			}
-		},
-		"databaseName": {
-			"type": "string",
-			"metadata": {
-				"description": "The name for the SQL database"
-			}
-		},
-		"sharedThroughput": {
-			"type": "int",
-			"defaultValue": 400,
-			"minValue": 400,
-			"maxValue": 1000000,
-			"metadata": {
-				"description": "The throughput for the database to be shared"
-			}			
-		},
-		"sharedContainer1Name": {
-			"type": "string",
-			"defaultValue": "sharedContainer1",
-			"metadata": {
-				"description": "The name for the first container with shared throughput"
-			}
-		},
-		"sharedContainer2Name": {
-			"type": "string",
-			"defaultValue": "sharedContainer2",
-			"metadata": {
-				"description": "The name for the second container with shared throughput"
-			}
-		},
-		"dedicatedContainer1Name": {
-			"type": "string",
-			"defaultValue": "dedicatedContainer1",
-			"metadata": {
-				"description": "The name for the container with dedicated throughput"
-			}
-		},
-		"dedicatedThroughput": {
-			"type": "int",
-			"defaultValue": 400,
-			"minValue": 400,
-			"maxValue": 1000000,
-			"metadata": {
-				"description": "The throughput for the container with dedicated throughput"
-			}			
-		}
 	},
 	"variables": {
-		"locations": 
-		[ 
-			{
-				"locationName": "[parameters('primaryRegion')]",
-				"failoverPriority": 0,
-				"isZoneRedundant": false
-			}, 
-			{
-				"locationName": "[parameters('secondaryRegion')]",
-				"failoverPriority": 1,
-				"isZoneRedundant": false
-			}
-		]
+        "accountName": "[concat('sql-', uniqueString(resourceGroup().id))]",
+        "databaseName": "DaprDemo",
+        "containerName": "PiCalc"
 	},
 	"resources": 
 	[
@@ -119,32 +18,31 @@
 			"location": "[resourceGroup().location]",
 			"properties": {
 				"consistencyPolicy": "Eventual",
-				"locations": "[variables('locations')]",
 				"databaseAccountOfferType": "Standard",
-				"enableAutomaticFailover": "[parameters('automaticFailover')]"
+				"enableAutomaticFailover": "false"
 			}
 		},
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
-			"name": "[concat(variables('accountName'), '/', parameters('databaseName'))]",
+			"name": "[concat(variables('accountName'), '/', variables('databaseName'))]",
 			"apiVersion": "2019-08-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]" ],
 			"properties":{
 				"resource":{
-					"id": "[parameters('databaseName')]"
+					"id": "[variables('databaseName')]"
 				},
-				"options": { "throughput": "[parameters('sharedThroughput')]" }
+				"options": { "throughput": "400" }
 			}
 		},
 		{
 			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('sharedContainer1Name'))]",
+			"name": "[concat(variables('accountName'), '/', variables('databaseName'), '/', variables('containerName))]",
 			"apiVersion": "2019-08-01",
 			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
 			"properties":
 			{
 				"resource":{
-					"id":  "[parameters('sharedContainer1Name')]",
+					"id":  "variables(containerName)",
 					"partitionKey": {
 						"paths": [
 						"/myPartitionKey"
@@ -163,98 +61,6 @@
 						]
 					}
 				}
-			}
-		},
-		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('sharedContainer2Name'))]",
-			"apiVersion": "2019-08-01",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
-			"properties":
-			{
-				"resource":{
-					"id":  "[parameters('sharedContainer2Name')]",
-					"partitionKey": {
-						"paths": [
-						"/myPartitionKey"
-						],
-						"kind": "Hash"
-					},
-					"indexingPolicy": {
-						"indexingMode": "consistent",
-						"includedPaths": [{
-								"path": "/*"
-							}
-						],
-						"excludedPaths": [{
-								"path": "/myPathToNotIndex/*"
-							}
-						]
-					}
-				}
-			}
-		},
-		{
-			"type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
-			"name": "[concat(variables('accountName'), '/', parameters('databaseName'), '/', parameters('dedicatedContainer1Name'))]",
-			"apiVersion": "2019-08-01",
-			"dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), parameters('databaseName'))]" ],
-			"properties":
-			{
-				"resource":{
-					"id":  "[parameters('dedicatedContainer1Name')]",
-					"partitionKey": {
-						"paths": [
-						"/myPartitionKey"
-						],
-						"kind": "Hash"
-					},
-					"indexingPolicy": {
-						"indexingMode": "consistent",
-						"includedPaths": [{
-								"path": "/*"
-							}
-						],
-						"excludedPaths": [{
-								"path": "/myPathToNotIndex/*"
-							}
-						],
-						"compositeIndexes":[  
-						[
-							{
-								"path":"/name",
-								"order":"ascending"
-							},
-							{
-								"path":"/age",
-								"order":"descending"
-							}
-						]
-					],
-					"spatialIndexes": [
-							{
-								"path": "/path/to/geojson/property/?",
-								"types": [
-									"Point",
-									"Polygon",
-									"MultiPolygon",
-									"LineString"
-								]
-							}
-						]
-					},
-					"defaultTtl": 86400,
-					"uniqueKeyPolicy": {
-						"uniqueKeys": [
-						{
-							"paths": [
-							"/phoneNumber"
-							]
-						}
-						]
-					}
-				},
-				"options": { "throughput": "[parameters('dedicatedThroughput')]" }
 			}
 		}
 	]
